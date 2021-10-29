@@ -1,5 +1,7 @@
 const express = require('express');
 const app = express();
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 const port = 3031;
 
 const users = {
@@ -21,6 +23,17 @@ const users = {
 			joined: new Date()
 		}
 	]
+};
+
+const hashPassword = (password) => {
+	bcrypt.hash(password, saltRounds, function(err, hash) {
+		if (err) throw new Error('error', err);
+		return hash;
+	});
+};
+
+const checkPassword = (password) => {
+	bcrypt.compare(password, hash, function(err, res) {});
 };
 
 const checkUsers = (email, password) => {
@@ -65,6 +78,7 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
 	const { name, email, password } = req.body;
+	hashPassword(password);
 	const id = Math.floor(Math.random() * 100) + 1;
 	users.users.push({
 		id: `00${id}`,
