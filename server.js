@@ -24,7 +24,7 @@ const users = {
 };
 
 const checkUsers = (email, password) => {
-	for (user in users) {
+	for (let user in users.users) {
 		if (user.email === email && user.password === password) {
 			return true;
 		} else {
@@ -33,11 +33,25 @@ const checkUsers = (email, password) => {
 	}
 };
 
+const findUser = (id) => {
+	users.filter((user) => user.id === id);
+};
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-	res.send();
+	res.send('welcome to smartbrain api');
+});
+
+app.get('/profile/:id', (req, res) => {
+	const { id } = req.params;
+	const user = findUser(id);
+	if (!user) {
+		res.status(400).json('user not found');
+	} else {
+		res.json({ user });
+	}
 });
 
 app.post('/signin', (req, res) => {
@@ -53,7 +67,7 @@ app.post('/register', (req, res) => {
 	const { name, email, password } = req.body;
 	const id = Math.floor(Math.random() * 100) + 1;
 	users.users.push({
-		id: `${id}`,
+		id: `00${id}`,
 		name,
 		email,
 		password,
@@ -61,6 +75,17 @@ app.post('/register', (req, res) => {
 		joined: new Date()
 	});
 	res.json(`registered user ${name} at ${email}`);
+});
+
+app.put('/image', (req, res) => {
+	const { id } = req.body;
+	const user = findUser(id);
+	if (!user) {
+		res.status(400).json('user not found');
+	} else {
+		users.users[user].entries++;
+		res.json(users.users[user].entries++);
+	}
 });
 
 app.listen(port, () => {
