@@ -83,18 +83,20 @@ app.post('/signin', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-	const { name, email, password } = req.body;
+	const { name, username, email, password } = req.body;
 	const hash = hashPassword(password);
 	const id = Math.floor(Math.random() * 100) + 1;
 	database.users.push({
 		id: `00${id}`,
 		name,
+		username,
 		email,
+		rememberMe: false,
 		password: hash,
 		entries: 0,
 		joined: new Date()
 	});
-	res.json(`registered user ${name} at ${email}`);
+	res.json(`registered user ${username} at ${email}`);
 });
 
 app.put('/image', (req, res) => {
