@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const cors = require('cors');
 const port = 3031;
 
 const users = {
@@ -52,6 +53,7 @@ const findUser = (id) => {
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+app.use(cors());
 
 app.get('/', (req, res) => {
 	res.send('welcome to smartbrain api');
