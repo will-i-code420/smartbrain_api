@@ -5,11 +5,13 @@ const saltRounds = 10;
 const cors = require('cors');
 const port = 3031;
 
-const users = {
+const database = {
 	users: [
 		{
 			id: '001',
 			name: 'Bob',
+			username: 'bobby_g',
+			rememberMe: false,
 			email: 'bigbog@gmail.com',
 			password: 'password',
 			entries: 0,
@@ -18,6 +20,8 @@ const users = {
 		{
 			id: '002',
 			name: 'Dick',
+			username: 'lil_dicky',
+			rememberMe: false,
 			email: 'littled@yahoo.com',
 			password: 'admin',
 			entries: 0,
@@ -34,12 +38,12 @@ const hashPassword = (password) => {
 };
 
 const checkPassword = (password) => {
-	bcrypt.compare(password, hash, function(err, res) {});
+	bcrypt.compare(password, storedPassword, function(err, res) {});
 };
 
-const checkUsers = (email, password) => {
-	for (let user in users.users) {
-		if (user.email === email && user.password === password) {
+const checkUsers = (username, password) => {
+	for (let user of database.users) {
+		if (user.username === username && user.password === password) {
 			return true;
 		} else {
 			return false;
@@ -48,12 +52,12 @@ const checkUsers = (email, password) => {
 };
 
 const findUser = (id) => {
-	users.filter((user) => user.id === id);
+	database.users.filter((user) => user.id === id);
 };
 
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
 app.use(cors());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ strict: false }));
 
 app.get('/', (req, res) => {
 	res.send('welcome to smartbrain api');
@@ -70,9 +74,9 @@ app.get('/profile/:id', (req, res) => {
 });
 
 app.post('/signin', (req, res) => {
-	const { email, password } = req.body;
-	if (checkUsers(email, password)) {
-		res.json(`logged in ${email}`);
+	const { username, password, rememberMe } = req.body;
+	if (checkUsers(username, password)) {
+		res.json(`logged in ${username}`);
 	} else {
 		res.status(400).json('user not found');
 	}
@@ -80,13 +84,13 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
 	const { name, email, password } = req.body;
-	hashPassword(password);
+	const hash = hashPassword(password);
 	const id = Math.floor(Math.random() * 100) + 1;
-	users.users.push({
+	database.users.push({
 		id: `00${id}`,
 		name,
 		email,
-		password,
+		password: hash,
 		entries: 0,
 		joined: new Date()
 	});
