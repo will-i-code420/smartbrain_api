@@ -76,7 +76,9 @@ app.get('/profile/:id', (req, res) => {
 app.post('/signin', (req, res) => {
 	const { username, password, rememberMe } = req.body;
 	if (checkUsers(username, password)) {
-		res.json(`logged in ${username}`);
+		const user = database.users.filter((user) => user.username === username);
+		delete user.password;
+		res.json({ user });
 	} else {
 		res.status(400).json('user not found');
 	}
@@ -96,7 +98,9 @@ app.post('/register', (req, res) => {
 		entries: 0,
 		joined: new Date()
 	});
-	res.json(`registered user ${username} at ${email}`);
+	const user = findUser(id);
+	delete user.password;
+	res.json({ user });
 });
 
 app.put('/image', (req, res) => {
