@@ -89,7 +89,7 @@ app.post('/register', (req, res) => {
 	const hash = hashPassword(password);
 	const id = Math.floor(Math.random() * 100) + 1;
 	database.users.push({
-		id: `00${id}`,
+		id,
 		name,
 		username,
 		email,
@@ -98,19 +98,25 @@ app.post('/register', (req, res) => {
 		entries: 0,
 		joined: new Date()
 	});
-	const user = findUser(id);
-	delete user.password;
+	const user = database.users.filter((user) => user.id === id);
+	//delete user.password;
 	res.json({ user });
 });
 
 app.put('/image', (req, res) => {
 	const { id } = req.body;
-	const user = findUser(id);
+	const user = database.users.filter((user) => {
+		if (user.id === id) {
+			user.entries++;
+			return user;
+		}
+	});
+	console.log(user);
 	if (!user) {
 		res.status(400).json('user not found');
 	} else {
-		users.users[user].entries++;
-		res.json(users.users[user].entries++);
+		console.log(user.entries);
+		res.json(user.entries);
 	}
 });
 
