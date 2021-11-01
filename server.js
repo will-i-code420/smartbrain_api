@@ -5,30 +5,18 @@ const saltRounds = 10;
 const cors = require('cors');
 const port = 3031;
 
-const database = {
-	users: [
-		{
-			id: '001',
-			name: 'Bob',
-			username: 'bobby_g',
-			rememberMe: false,
-			email: 'bigbog@gmail.com',
-			password: 'password',
-			entries: 0,
-			joined: new Date()
-		},
-		{
-			id: '002',
-			name: 'Dick',
-			username: 'lil_dicky',
-			rememberMe: false,
-			email: 'littled@yahoo.com',
-			password: 'admin',
-			entries: 0,
-			joined: new Date()
-		}
-	]
-};
+const knex = require('knex');
+
+const db = knex({
+	client: 'pg',
+	connection: {
+		host: '127.0.0.1',
+		port: 5432,
+		user: '',
+		password: '',
+		database: 'smartbrain'
+	}
+});
 
 const hashPassword = (password) => {
 	bcrypt.hash(password, saltRounds, function(err, hash) {
