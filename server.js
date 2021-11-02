@@ -25,8 +25,8 @@ const hashPassword = (password) => {
 	});
 };
 
-const checkPassword = (password) => {
-	bcrypt.compare(password, storedPassword, function(err, res) {});
+const checkPassword = (password, hash) => {
+	return bcrypt.compare(password, hash);
 };
 
 app.use(cors());
@@ -40,7 +40,7 @@ app.get('/', (req, res) => {
 app.get('/profile/:id', async (req, res) => {
 	const { id } = req.params;
 	try {
-		const user = await db.select('*').from('users').where({ id: id });
+		const user = await db.select('*').from('users').where({ id });
 		res.json({
 			status: 'success',
 			user
@@ -52,22 +52,27 @@ app.get('/profile/:id', async (req, res) => {
 			msg: 'Unable to retrieve profile'
 		});
 	}
-
-	if (!user) {
-		res.status(400).json('user not found');
-	} else {
-		res.json({ user });
-	}
 });
 
-app.post('/signin', (req, res) => {
-	const { username, password, rememberMe } = req.body;
-	if (checkUsers(username, password)) {
-		const user = database.users.filter((user) => user.username === username);
-		delete user.password;
-		res.json({ user });
-	} else {
-		res.status(400).json('user not found');
+app.post('/signin', async (req, res) => {
+	const { username, password } = req.body;
+	try {
+		const login = await db.select('username', 'hash').from('login').where('username', '=', username);
+		if (checkPassword(password, login.hash) && username === login.username) {
+			const user = await db.select('*').from('users').where('username', '=', username);
+			return res.json({
+				status: 'success',
+				user
+			});
+		} else {
+			throw new Error();
+		}
+	} catch (e) {
+		console.log(e);
+		res.status(400).json({
+			status: 'error',
+			msg: 'invalid username or password'
+		});
 	}
 });
 
@@ -75,10 +80,14 @@ app.post('/register', async (req, res) => {
 	const { name, username, email, password } = req.body;
 	try {
 		const hash = hashPassword(password);
-		const newUser = await db('users').returning().insert({ name, username, email, joined: new Date() });
-		res.json({
-			status: 'success',
-			newUser
+		await db.transaction(async (trx) => {
+			await trx.insert({ hash, username }).into('login');
+			const newUser = await trx.insert({ name, username, email, joined: new Date() }).into('users').returning();
+			await trx.commit();
+			res.json({
+				status: 'success',
+				newUser
+			});
 		});
 	} catch (e) {
 		console.log(e);
