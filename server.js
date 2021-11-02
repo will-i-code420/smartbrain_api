@@ -29,20 +29,6 @@ const checkPassword = (password) => {
 	bcrypt.compare(password, storedPassword, function(err, res) {});
 };
 
-const checkUsers = (username, password) => {
-	for (let user of database.users) {
-		if (user.username === username && user.password === password) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-};
-
-const findUser = (id) => {
-	database.users.filter((user) => user.id === id);
-};
-
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json({ strict: false }));
@@ -51,9 +37,22 @@ app.get('/', (req, res) => {
 	res.send('welcome to smartbrain api');
 });
 
-app.get('/profile/:id', (req, res) => {
+app.get('/profile/:id', async (req, res) => {
 	const { id } = req.params;
-	const user = findUser(id);
+	try {
+		const user = await db.select('*').from('users').where({ id: id });
+		res.json({
+			status: 'success',
+			user
+		});
+	} catch (e) {
+		console.log(e);
+		res.status(400).json({
+			status: 'error',
+			msg: 'Unable to retrieve profile'
+		});
+	}
+
 	if (!user) {
 		res.status(400).json('user not found');
 	} else {
@@ -72,23 +71,22 @@ app.post('/signin', (req, res) => {
 	}
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
 	const { name, username, email, password } = req.body;
-	const hash = hashPassword(password);
-	const id = Math.floor(Math.random() * 100) + 1;
-	database.users.push({
-		id,
-		name,
-		username,
-		email,
-		rememberMe: false,
-		password: hash,
-		entries: 0,
-		joined: new Date()
-	});
-	const user = database.users.filter((user) => user.id === id);
-	//delete user.password;
-	res.json({ user });
+	try {
+		const hash = hashPassword(password);
+		const newUser = await db('users').returning().insert({ name, username, email, joined: new Date() });
+		res.json({
+			status: 'success',
+			newUser
+		});
+	} catch (e) {
+		console.log(e);
+		res.status(400).json({
+			status: 'error',
+			msg: 'Unable to register user'
+		});
+	}
 });
 
 app.put('/image', (req, res) => {
