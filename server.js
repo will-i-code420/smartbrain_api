@@ -89,20 +89,17 @@ app.post('/register', async (req, res) => {
 	}
 });
 
-app.put('/image', (req, res) => {
+app.put('/image', async (req, res) => {
 	const { id } = req.body;
-	const user = database.users.filter((user) => {
-		if (user.id === id) {
-			user.entries++;
-			return user;
-		}
-	});
-	console.log(user);
-	if (!user) {
-		res.status(400).json('user not found');
-	} else {
-		console.log(user.entries);
-		res.json(user.entries);
+	try {
+		const entries = await db('users').where('id', '=', id).increment('entries', 1).returning('entries');
+		res.json({ entries });
+	} catch (e) {
+		console.log(e);
+		res.status(400).json({
+			status: 'error',
+			msg: 'Unable to update entries'
+		});
 	}
 });
 
