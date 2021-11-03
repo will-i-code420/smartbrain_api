@@ -19,10 +19,7 @@ const db = knex({
 });
 
 const hashPassword = (password) => {
-	bcrypt.hash(password, saltRounds, function(err, hash) {
-		if (err) throw new Error('error', err);
-		return hash;
-	});
+	return bcrypt.hash(password, saltRounds, null);
 };
 
 const checkPassword = (password, hash) => {
@@ -43,7 +40,7 @@ app.get('/profile/:id', async (req, res) => {
 		const user = await db.select('*').from('users').where({ id });
 		res.json({
 			status: 'success',
-			user
+			user: user[0]
 		});
 	} catch (e) {
 		console.log(e);
@@ -62,7 +59,7 @@ app.post('/signin', async (req, res) => {
 			const user = await db.select('*').from('users').where('username', '=', username);
 			return res.json({
 				status: 'success',
-				user
+				user: user[0]
 			});
 		} else {
 			throw new Error();
@@ -79,14 +76,17 @@ app.post('/signin', async (req, res) => {
 app.post('/register', async (req, res) => {
 	const { name, username, email, password } = req.body;
 	try {
-		const hash = hashPassword(password);
+		const hash = await hashPassword(password);
 		await db.transaction(async (trx) => {
 			await trx.insert({ hash, username }).into('login');
-			const newUser = await trx.insert({ name, username, email, joined: new Date() }).into('users').returning();
+			const newUser = await trx
+				.insert({ name, username, email, joined: new Date() })
+				.into('users')
+				.returning('*');
 			await trx.commit();
 			res.json({
 				status: 'success',
-				newUser
+				user: newUser[0]
 			});
 		});
 	} catch (e) {
