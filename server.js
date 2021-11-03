@@ -54,15 +54,20 @@ app.get('/profile/:id', async (req, res) => {
 app.post('/signin', async (req, res) => {
 	const { username, password } = req.body;
 	try {
-		const login = await db.select('username', 'hash').from('login').where('username', '=', username);
-		if (checkPassword(password, login.hash) && username === login.username) {
+		const login = await db.select('username', 'hash').from('login').where({ username });
+		const isValid = await checkPassword(password, login[0].hash);
+		if (isValid && username === login[0].username) {
 			const user = await db.select('*').from('users').where('username', '=', username);
 			return res.json({
 				status: 'success',
 				user: user[0]
 			});
 		} else {
-			throw new Error();
+			console.log(e);
+			res.status(400).json({
+				status: 'error',
+				msg: 'invalid username or password'
+			});
 		}
 	} catch (e) {
 		console.log(e);
@@ -90,6 +95,7 @@ app.post('/register', async (req, res) => {
 			});
 		});
 	} catch (e) {
+		trx.rollback();
 		console.log(e);
 		res.status(400).json({
 			status: 'error',
